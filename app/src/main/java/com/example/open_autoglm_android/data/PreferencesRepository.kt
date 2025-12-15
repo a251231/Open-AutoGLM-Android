@@ -29,7 +29,7 @@ class PreferencesRepository(private val context: Context) {
     }
     
     val modelName: Flow<String?> = context.dataStore.data.map { preferences ->
-        preferences[PreferenceKeys.MODEL_NAME] ?: "autoglm-phone"
+        preferences[PreferenceKeys.MODEL_NAME] ?: "autoglm-phone-9b"
     }
     
     suspend fun saveApiKey(apiKey: String) {
@@ -62,7 +62,7 @@ class PreferencesRepository(private val context: Context) {
     
     suspend fun getModelNameSync(): String {
         return context.dataStore.data.map { 
-            it[PreferenceKeys.MODEL_NAME] ?: "autoglm-phone"
-        }.firstOrNull() ?: "autoglm-phone"
+            it[PreferenceKeys.MODEL_NAME] ?: "autoglm-phone-9b"
+        }.firstOrNull() ?: "autoglm-phone-9b"
     }
 }

@@ -84,6 +84,13 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         
+        // 自动清理会话：开始新任务前清空 UI 消息和完成提示
+        _uiState.value = _uiState.value.copy(
+            messages = emptyList(),
+            taskCompletedMessage = null,
+            error = null
+        )
+        
         val userMessage = ChatMessage(
             id = System.currentTimeMillis().toString(),
             role = MessageRole.USER,

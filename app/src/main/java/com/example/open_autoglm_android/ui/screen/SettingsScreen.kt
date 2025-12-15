@@ -125,7 +125,7 @@ fun SettingsScreen(
             label = { Text("Model Name") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            placeholder = { Text("autoglm-phone") }
+            placeholder = { Text("autoglm-phone-9b") }
         )
         
         // 保存按钮
