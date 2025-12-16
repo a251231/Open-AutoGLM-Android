@@ -398,12 +398,17 @@ class ActionExecutor(private val service: AutoGLMAccessibilityService) {
             "launch" -> launchApp(actionObj)
             "tap" -> tap(actionObj, screenWidth, screenHeight)
             "type" -> type(actionObj)
+            "type_name", "type name" -> typeName(actionObj)
             "swipe" -> swipe(actionObj, screenWidth, screenHeight)
             "back" -> back()
             "home" -> home()
             "longpress", "long press" -> longPress(actionObj, screenWidth, screenHeight)
             "doubletap", "double tap" -> doubleTap(actionObj, screenWidth, screenHeight)
             "wait" -> wait(actionObj)
+            "note" -> note(actionObj)
+            "call_api", "call api" -> callApi(actionObj)
+            "interact" -> interact(actionObj)
+            "take_over", "take over" -> takeOver(actionObj)
             else -> ExecuteResult(success = false, message = "不支持的操作: $action")
         }
     }
@@ -497,6 +502,11 @@ class ActionExecutor(private val service: AutoGLMAccessibilityService) {
         root.recycle()
         return ExecuteResult(success = false, message = "找不到输入框")
     }
+
+    private suspend fun typeName(actionObj: JsonObject): ExecuteResult {
+        // 与 Type 保持一致，针对人名提供统一的指令名称
+        return type(actionObj)
+    }
     
     private suspend fun swipe(actionObj: JsonObject, screenWidth: Int, screenHeight: Int): ExecuteResult {
         val start = actionObj.get("start")?.asJsonArray
@@ -584,6 +594,45 @@ class ActionExecutor(private val service: AutoGLMAccessibilityService) {
         val durationMs = parseDurationMillis(actionObj.get("duration"))
         delay(durationMs)
         return ExecuteResult(success = true, message = "已等待 ${durationMs}ms")
+    }
+
+    private fun note(actionObj: JsonObject): ExecuteResult {
+        val message = actionObj.get("message")?.asString ?: ""
+        val content = if (message.isBlank()) "无内容，已记录当前页面" else "已记录标注: $message"
+        return ExecuteResult(success = true, message = content)
+    }
+
+    private fun callApi(actionObj: JsonObject): ExecuteResult {
+        val instruction = actionObj.get("instruction")?.asString ?: ""
+        val content = if (instruction.isBlank()) {
+            "Call_API 指令已接收，当前仅记录未实际调用后端，请手动处理。"
+        } else {
+            "Call_API 指令已记录：$instruction（需后端/人工实现，当前未实际调用）。"
+        }
+        return ExecuteResult(success = true, message = content)
+    }
+
+    private fun interact(actionObj: JsonObject): ExecuteResult {
+        val question = actionObj.get("message")?.asString
+            ?: actionObj.get("question")?.asString
+            ?: actionObj.get("text")?.asString
+            ?: ""
+        val content = if (question.isBlank()) {
+            "需要用户交互：请在设备上手动选择/确认后重新下达指令。"
+        } else {
+            "需要用户交互：$question，请手动选择后继续。"
+        }
+        return ExecuteResult(success = true, message = content)
+    }
+
+    private fun takeOver(actionObj: JsonObject): ExecuteResult {
+        val message = actionObj.get("message")?.asString ?: ""
+        val content = if (message.isBlank()) {
+            "需要用户接管以完成登录/验证等敏感操作，请完成后再继续。"
+        } else {
+            "需要用户接管：$message"
+        }
+        return ExecuteResult(success = true, message = content)
     }
 
     private fun parseDurationMillis(durationElement: JsonElement?): Long {
@@ -846,4 +895,3 @@ class ActionExecutor(private val service: AutoGLMAccessibilityService) {
         return null
     }
 }
-

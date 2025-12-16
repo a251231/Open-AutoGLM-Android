@@ -258,6 +258,34 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 screenshot.height
             )
             Log.d("ChatViewModel", "动作执行结果: success=${result.success}, message=${result.message}")
+
+            // 将动作执行反馈展示在 UI 中，便于用户知情
+            if (!result.message.isNullOrBlank()) {
+                val feedbackMessage = ChatMessage(
+                    id = "${System.currentTimeMillis()}_${stepCount}_result",
+                    role = MessageRole.ASSISTANT,
+                    content = result.message,
+                    thinking = null,
+                    action = null
+                )
+                _uiState.value = _uiState.value.copy(
+                    messages = _uiState.value.messages + feedbackMessage
+                )
+            }
+
+            // 某些指令需要用户手动处理或后续人工介入，直接结束自动流程并提示
+            val lowerAction = response.action.lowercase()
+            val requiresUser = lowerAction.contains("interact") ||
+                lowerAction.contains("take_over") || lowerAction.contains("take over") ||
+                lowerAction.contains("call_api") || lowerAction.contains("call api")
+            if (requiresUser) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    taskCompletedMessage = result.message ?: "需要用户进一步操作，已暂停自动执行。"
+                )
+                Log.d("ChatViewModel", "指令需要用户交互或人工接管，已结束自动流程: ${result.message}")
+                return
+            }
             
             val isFinished = result.message != null && (result.message!!.contains("完成") || 
                 result.message!!.contains("finish")) || 
